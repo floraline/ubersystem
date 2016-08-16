@@ -1,0 +1,19 @@
+{% extends "base-admin.html" %}
+{% block title %}Zip Code Information{% endblock %}
+{% block content %}
+{% for type, contents in stats.items %}
+    <table>
+    <thead>
+    <tr>
+        <th>{{ type }}</th>
+        <th>Count</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for zip, count in contents.items %}
+        <tr><td>{{ zip }}</td><td>{{ count }}</td></tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endfor %}
+{% endblock %}

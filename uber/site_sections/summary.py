@@ -400,3 +400,24 @@ class Root:
                                                           and a.weighted_hours >= c.HOURS_FOR_REFUND]
             )]
         }
+
+    def zip_codes(self, session):
+        message = ''
+        attendees = session.query(Attendee).filter(Attendee.paid.in_([c.HAS_PAID, c.PAID_BY_GROUP, c.REFUNDED])).all()
+        stats = {}
+        types = ['zip_code', 'first_name']
+        for a in attendees:
+            for i in types:
+                type = str(i).replace("_", " ").capitalize()
+                if type not in stats:
+                    stats[type] = {}
+                attr = getattr(a, i)
+                if str(attr) in stats:
+                    stats[type][str(attr)] = stats[type][str(attr)] + 1
+                else:
+                    stats[type][str(attr)] = 1
+        return {
+            'message':message,
+            'stats':stats
+        }
+
