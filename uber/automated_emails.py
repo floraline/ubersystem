@@ -278,3 +278,11 @@ if PRE_CON:
 
     for _conf in DeptChecklistConf.instances.values():
         DeptChecklistEmail(_conf)
+
+AutomatedEmail(Attendee, 'Claim your Game Over Baltimore 2015 tickets with your MAGFest Season Pass', 'reg_workflow/gob2015.txt',
+               lambda a: a.amount_extra >= SEASON_LEVEL,
+               post_con=True, needs_approval=True)
+
+AutomatedEmail(Attendee, 'Claim your MAGStock 2015 tickets with your MAGFest Season Pass', 'reg_workflow/magstock2015.txt',
+               lambda a: a.amount_extra >= SEASON_LEVEL,
+               post_con=True, needs_approval=True)
