@@ -508,7 +508,7 @@ if POST_CON:
         def default(self, *args, **kwargs):
             return """
                 <html><head></head><body style='text-align:center'>
-                    <h2 style='color:red'>Hope you had a great {event}!</h2>
+                    <h2 style='color:red'>Hope you had a truly wonderful {event}!</h2>
                     Preregistration for {event} {year} will open in a few months.
                 </body></html>
             """.format(event=EVENT_NAME, year=(1 + int(YEAR)) if YEAR else '')
