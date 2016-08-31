@@ -1,0 +1,9 @@
+{{ attendee.first_name }},
+
+As part of your Season Supporter package for MAGFest 2015, you are eligible for complimentary admission to all MAGFest events in 2015.  Our next event is Game Over Baltimore, and it's coming up on 7pm on Saturday, March 21st at Metro Gallery in Baltimore, MD, which you can read more about at https://www.facebook.com/events/326700747529417/
+
+To claim your complementary badge, just visit {{ URL_BASE }}/preregistration/event?slug=gob&id={{ attendee.id }}
+
+Remember that our events often sell out, so if you would like to attend this event, please RSVP no later than Sunday, March 15th so that we can reserve a ticket for you.  Please note that your complimentary pass is only valid for you, and is not transferrable.  Thanks so much for your support, and we hope to see you there!
+
+{{ REGDESK_EMAIL_SIGNATURE }}

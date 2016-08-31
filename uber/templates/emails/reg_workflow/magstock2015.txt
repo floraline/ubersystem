@@ -1,0 +1,9 @@
+{{ attendee.first_name }},
+
+As part of your Season Supporter package for MAGFest 2015, you are eligible for complimentary admission to all MAGFest events in 2015.  Our next event is MAGStock, and it's happening Friday, June 19th through Sunday, June 21st at the Small Country Campground in Louisa, VA, which you can read more about at http://magstock.org/
+
+To claim your complementary badge, just visit {{ URL_BASE }}/preregistration/event?slug=magstock&id={{ attendee.id }}
+
+Remember that our events often sell out, so if you would like to attend this event, please RSVP no later than Sunday, June 14th so that we can reserve a ticket for you.  Please note that your complimentary pass is only valid for you, and is not transferrable.  Thanks so much for your support, and we hope to see you there!
+
+{{ REGDESK_EMAIL_SIGNATURE }}
