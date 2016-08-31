@@ -500,6 +500,9 @@ class Root:
         return {}
 
 if POST_CON:
+    # post-2015 HACK?
+    orig_event = Root.event
+
     @all_renderable()
     class Root:
         def default(self, *args, **kwargs):
@@ -528,3 +531,6 @@ if POST_CON:
                 'message': message,
                 'attendee': attendee
             }
+
+    # post-2015 HACK?
+    Root.event = orig_event
