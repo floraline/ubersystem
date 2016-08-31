@@ -41,7 +41,7 @@ def check_post_con(klass):
             if c.POST_CON:  # TODO: replace this with a template and make that suitably generic
                 return """
                 <html><head></head><body style='text-align:center'>
-                    <h2 style='color:red'>Hope you had a great {event}!</h2>
+                    <h2 style='color:red'>Hope you had a truly wonderful {event}!</h2>
                     Preregistration for {event} {year} will open in a few months.
                 </body></html>
                 """.format(event=c.EVENT_NAME, year=(1 + int(c.YEAR)) if c.YEAR else '')
