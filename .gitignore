@@ -12,3 +12,4 @@ event.conf
 workspace.xml
 tasks.xml
 distribute-*.tar.gz
+plugins/*
