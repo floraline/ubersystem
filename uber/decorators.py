@@ -323,7 +323,7 @@ def tag(klass):
     return klass
 
 
-def create_redirect(url, access=[c.PEOPLE]):
+def create_redirect(url, access=[PEOPLE]):
     """
     Return a function which redirects to the given url when called.
     """
