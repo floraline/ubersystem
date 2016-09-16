@@ -1,1 +1,1 @@
-__version__ = '13.0'
+__version__ = '2015.01'  # magfest 2015 (magfest 13)
