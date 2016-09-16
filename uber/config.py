@@ -282,3 +282,18 @@ AT_OR_POST_CON = AT_THE_CON or POST_CON
 PRE_CON = not AT_OR_POST_CON
 
 SAME_NUMBER_REPEATED = r'^(\d)\1+$'
+
+# -----------------
+# BACKPORT CONFIG
+# some of our newer plugins that we are making work with the older system
+# require the new-style 'c' config object.  We'll fake it here.
+# -----------------
+
+class BackportConfig:
+    pass
+
+c = BackportConfig
+c.PEOPLE = PEOPLE
+c.ACCOUNTS = ACCOUNTS
+c.STATS = STATS
+c.MONEY = MONEY
