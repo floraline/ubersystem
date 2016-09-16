@@ -103,15 +103,40 @@ def multifile_zipfile(func):
     return zipfile_out
 
 
+def _set_csv_base_filename(base_filename):
+    """
+    Set the correct headers when outputting CSV files to specify the filename the browser should use
+    """
+    cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=' + base_filename + '.csv'
+
+
 def csv_file(func):
     @wraps(func)
     def csvout(self, session, **kwargs):
-        cherrypy.response.headers['Content-Type'] = 'application/csv'
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=' + func.__name__ + '.csv'
         writer = StringIO()
         func(self, csv.writer(writer), session, **kwargs)
-        return writer.getvalue().encode('utf-8')
+        output = writer.getvalue().encode('utf-8')
+        # set headers last in case there were errors, so end user still see error page
+        cherrypy.response.headers['Content-Type'] = 'application/csv'
+        _set_csv_base_filename(func.__name__)
+        return output
     return csvout
+
+
+def set_csv_filename(func):
+    """
+    Use this to override CSV filenames, useful when working with aliases and redirects to make it print the correct name
+    """
+    @wraps(func)
+    def change_filename(self, override_filename=None, *args, **kwargs):
+        out = func(self, *args, **kwargs)
+        _set_csv_base_filename(override_filename or func.__name__)
+        return out
+    return change_filename
+
+
+def get_module_name(class_or_func):
+    return class_or_func.__module__.split('.')[-1]
 
 
 def check_shutdown(func):
@@ -279,6 +304,16 @@ def restricted(func):
     return with_restrictions
 
 
+def set_renderable(func, acccess):
+    """
+    Return a function that is flagged correctly and is ready to be called by cherrypy as a request
+    """
+    func.restricted = getattr(func, 'restricted', acccess)
+    new_func = timed(cached_page(sessionized(restricted(renderable(func)))))
+    new_func.exposed = True
+    return new_func
+
+
 class all_renderable:
     def __init__(self, *needs_access):
         self.needs_access = needs_access
@@ -286,9 +321,7 @@ class all_renderable:
     def __call__(self, klass):
         for name, func in klass.__dict__.items():
             if hasattr(func, '__call__'):
-                func.restricted = getattr(func, 'restricted', self.needs_access)
-                new_func = timed(cached_page(sessionized(restricted(renderable(func)))))
-                new_func.exposed = True
+                new_func = set_renderable(func, self.needs_access)
                 setattr(klass, name, new_func)
         return klass
 
@@ -363,3 +396,40 @@ class class_property(object):
 
     def __get__(self, obj, owner):
         return self.func(owner)
+
+
+def create_redirect(url, access=[c.PEOPLE]):
+    """
+    Return a function which redirects to the given url when called.
+    """
+    def redirect(self):
+        raise HTTPRedirect(url)
+    renderable_func = set_renderable(redirect, access)
+    return renderable_func
+
+
+class alias_to_site_section(object):
+    """
+    Inject a URL redirect from another page to the decorated function.
+    This is useful for downstream plugins to add or change functions in upstream plugins to modify their behavior.
+
+    Example: if you move the explode_kittens() function from the core's site_section/summary.py page to a plugin,
+    in that plugin you can create an alias back to the original function like this:
+
+    @alias_to_site_section('summary')
+    def explode_kittens(...):
+        ...
+
+    Please note that this doesn't preserve arguments, it just causes a redirect.  It's most useful for pages without
+    arguments like reports and landing pages.
+    """
+    def __init__(self, site_section_name, alias_name=None, url=None):
+        self.site_section_name = site_section_name
+        self.alias_name = alias_name
+        self.url = url
+
+    def __call__(self, func):
+        root = getattr(uber.site_sections, self.site_section_name).Root
+        redirect_func = create_redirect(self.url or '../' + get_module_name(func) + '/' + func.__name__)
+        setattr(root, self.alias_name or func.__name__, redirect_func)
+        return func
