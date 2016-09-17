@@ -95,19 +95,3 @@ for _opt, _val in conf['badge_prices']['attendee'].items():
 
 AT_OR_POST_CON = AT_THE_CON or POST_CON
 PRE_CON = not AT_OR_POST_CON
-
-# -----------------
-# BACKPORT CONFIG
-# some of our newer plugins that we are making work with the older system
-# require the new-style 'c' config object.  We'll fake it here.
-# -----------------
-
-class BackportConfig:
-    pass
-
-c = BackportConfig
-c.PEOPLE = PEOPLE
-c.ACCOUNTS = ACCOUNTS
-c.STATS = STATS
-c.MONEY = MONEY
-c.PATH = PATH

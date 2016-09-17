@@ -420,3 +420,19 @@ except ImportError:
 PREREG_SHIRT_OPTS = SHIRT_OPTS[1:]
 MERCH_SHIRT_OPTS = [(SIZE_UNKNOWN, 'select a size')] + list(PREREG_SHIRT_OPTS)
 DONATION_OPTS = sorted((amt, '+ ${}: {}'.format(amt,desc) if amt else desc) for amt,desc in DONATION_TIERS.items())
+
+# -----------------
+# BACKPORT CONFIG
+# some of our newer plugins that we are making work with the older system
+# require the new-style 'c' config object.  We'll fake it here.
+# -----------------
+
+class BackportConfig:
+    pass
+
+c = BackportConfig
+c.PEOPLE = PEOPLE
+c.ACCOUNTS = ACCOUNTS
+c.STATS = STATS
+c.MONEY = MONEY
+c.PATH = PATH
