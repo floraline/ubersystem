@@ -69,7 +69,6 @@ from uber.badge_funcs import *
 from uber import model_checks
 from uber import custom_tags
 from uber.server import *
-from uber.config import c
 
 # kludgy hack because I love "from <module> import *" way too much
 for _module in ['utils', 'models', 'custom_tags', 'decorators']:
