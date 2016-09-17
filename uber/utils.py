@@ -292,3 +292,38 @@ class DaemonTask:
 
             if self.interval:
                 stopped.wait(self.interval)
+
+
+def template_overrides(dirname):
+    """
+    Each event can have its own plugin and override our default templates with
+    its own by calling this method and passing its templates directory.
+    """
+    django.conf.settings.TEMPLATE_DIRS.insert(0, dirname)
+
+
+def static_overrides(dirname):
+    """
+    We want plugins to be able to specify their own static files to override the
+    ones which we provide by default.  The main files we expect to be overridden
+    are the theme image files, but theoretically a plugin can override anything
+    it wants by calling this method and passing its static directory.
+    """
+    appconf = cherrypy.tree.apps[c.PATH].config
+    basedir = os.path.abspath(dirname).rstrip('/')
+    for dpath, dirs, files in os.walk(basedir):
+        relpath = dpath[len(basedir):]
+        for fname in files:
+            appconf['/static' + relpath + '/' + fname] = {
+                'tools.staticfile.on': True,
+                'tools.staticfile.filename': os.path.join(dpath, fname)
+            }
+
+
+def mount_site_sections(module_root):
+    from uber.server import Root
+    sections = [path.split('/')[-1][:-3] for path in glob(os.path.join(module_root, 'site_sections', '*.py'))
+                                         if not path.endswith('__init__.py')]
+    for section in sections:
+        module = importlib.import_module(basename(module_root) + '.site_sections.' + section)
+        setattr(Root, section, module.Root())

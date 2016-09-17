@@ -10,11 +10,12 @@ import random
 import logging
 import inspect
 import warnings
+import importlib
+import mimetypes
 import threading
 import traceback
 from glob import glob
 from uuid import uuid4
-from io import StringIO
 from pprint import pprint
 from copy import deepcopy
 from pprint import pformat
@@ -25,11 +26,14 @@ from random import randrange
 from contextlib import closing
 from time import sleep, mktime
 from urllib.parse import quote
+from io import StringIO, BytesIO
 from urllib.parse import urlparse
+from urllib.parse import parse_qsl
+from itertools import chain, count
 from collections import defaultdict, OrderedDict
-from os.path import abspath, dirname, exists, join
 from datetime import date, time, datetime, timedelta
 from threading import Thread, RLock, local, current_thread
+from os.path import abspath, basename, dirname, exists, join
 
 import bcrypt
 import cherrypy
@@ -65,6 +69,7 @@ from uber.badge_funcs import *
 from uber import model_checks
 from uber import custom_tags
 from uber.server import *
+from uber.config import c
 
 # kludgy hack because I love "from <module> import *" way too much
 for _module in ['utils', 'models', 'custom_tags', 'decorators']:
