@@ -62,6 +62,7 @@ stripe.api_key = STRIPE_SECRET_KEY
 import logging_unterpolation
 logging_unterpolation.patch_logging()
 
+import uber
 from uber.utils import *
 from uber.decorators import *
 from uber.models import *
@@ -73,3 +74,7 @@ from uber.server import *
 # kludgy hack because I love "from <module> import *" way too much
 for _module in ['utils', 'models', 'custom_tags', 'decorators']:
     __import__('uber.' + _module, fromlist=['os']).__dict__.update(globals())
+
+# DOM: not sure if best place to do it but, need to fake
+# this plugin load somewhere, we're pre-sideboard here.
+from reports import *
