@@ -1,7 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="magfest85_production">
+  <component name="PublishConfigData" serverName="magfest85_production" compareModeInSync="TIMESTAMP">
     <serverData>
+      <paths name="Copy of project-level server 'magfest85_production'">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath path="/env" />
+            <excludedPath path="/sessions" />
+            <excludedPath path="/.idea" />
+            <excludedPath path="/uber.egg-info" />
+            <excludedPath path="/uber.bad.log" />
+            <excludedPath path="/uber.log" />
+            <excludedPath path="/distribute-0.6.49.tar.gz" />
+            <excludedPath path="/plugins/reports/reports.egg-info" />
+            <excludedPath path="/plugins/reports/reports/__pycache__" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
       <paths name="magfest85_production">
         <serverdata>
           <mappings>
@@ -17,6 +35,7 @@
             <excludedPath path="/distribute-0.6.49.tar.gz" />
             <excludedPath path="/plugins/reports/reports.egg-info" />
             <excludedPath path="/plugins/reports/reports/__pycache__" />
+            <excludedPath path="*__pycache__" />
           </excludedPaths>
         </serverdata>
       </paths>
