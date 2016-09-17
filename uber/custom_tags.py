@@ -1,5 +1,17 @@
 from uber.common import *
 
+
+@register.filter
+def form_link(model):
+    if isinstance(model, Attendee):
+        return SafeString('<a href="../registration/form?id={}">{}</a>'.format(model.id, model.full_name))
+    elif isinstance(model, Group):
+        return SafeString('<a href="../groups/form?id={}">{}</a>'.format(model.id, model.name))
+    elif isinstance(model, Job):
+        return SafeString('<a href="../jobs/form?id={}">{}</a>'.format(model.id, model.name))
+    else:
+        return model.name or model.full_name
+
 @register.filter
 def datetime(dt, fmt='11:59pm EST on %A, %b %e'):
     return ' '.join(dt.strftime(fmt).split())
