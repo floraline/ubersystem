@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="localhost uber">
+  <component name="PublishConfigData" serverName="magfest85_production">
     <serverData>
-      <paths name="localhost uber">
+      <paths name="magfest85_production">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/home/vagrant/magfest" />
-            <mapping local="" />
+            <mapping deploy="/" local="$PROJECT_DIR$" web="/" />
           </mappings>
+          <excludedPaths>
+            <excludedPath path="/env" />
+            <excludedPath path="/sessions" />
+            <excludedPath path="/.idea" />
+            <excludedPath path="/uber.egg-info" />
+            <excludedPath path="/uber.bad.log" />
+            <excludedPath path="/uber.log" />
+            <excludedPath path="/distribute-0.6.49.tar.gz" />
+            <excludedPath path="/plugins/reports/reports.egg-info" />
+            <excludedPath path="/plugins/reports/reports/__pycache__" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
   </component>
 </project>
-

@@ -14,3 +14,5 @@ tasks.xml
 distribute-*.tar.gz
 plugins/*
 development.ini
+.idea/workspace.xml
+.idea/webServers.xml
