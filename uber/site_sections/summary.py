@@ -270,6 +270,18 @@ class Root:
             if a.worked_hours > 0:
                 out.writerow([a.badge_num, a.full_name, a.email, a.weighted_hours, a.worked_hours])
 
+    @csv_file
+    def volunteer_count_by_department(self, out, session):
+        out.writerow(["Department", "Number of Registered Staff"])
+        attendees = session.staffers().all()
+        total = 0
+        for department, name in c.JOB_LOCATION_OPTS:
+            assigned = [a for a in attendees if department in a.assigned_depts_ints and not a.placeholder]
+            out.writerow([name, len(assigned)])
+            total = len(assigned)
+        out.writerow([])
+        out.writerow(["Total", total])
+
     def shirt_manufacturing_counts(self, session):
         """
         This report should be the definitive report about the count and sizes of shirts needed to be ordered.
