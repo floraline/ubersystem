@@ -487,7 +487,7 @@ class Session(SessionManager):
                                                      WatchList.active == True)).all()
 
         def get_account_by_email(self, email):
-            return self.query(AdminAccount).join(Attendee).filter(func.lower(Attendee.email) == func.lower(email)).one()
+            return self.query(AdminAccount).join(Attendee).join(Attendee.account).filter(func.lower(Attendee.email) == func.lower(email)).one()
 
         def no_email(self, subject):
             return not self.query(Email).filter_by(subject=subject).all()
@@ -1009,29 +1009,37 @@ class Group(MagModel, TakesPaymentMixin):
             return c.MIN_GROUP_ADDITION
 
 
+class CachedAccount(MagModel):
+    attendees = relationship('Attendee', backref=backref('cached_account', load_on_pending=True))
+    first_name = Column(UnicodeText)
+    last_name = Column(UnicodeText)
+    legal_name = Column(UnicodeText)
+    email = Column(UnicodeText)
+    birthdate = Column(Date, nullable=True, default=None)
+    zip_code = Column(UnicodeText)
+    address1 = Column(UnicodeText)
+    address2 = Column(UnicodeText)
+    city = Column(UnicodeText)
+    region = Column(UnicodeText)
+    country = Column(UnicodeText)
+    ec_name = Column(UnicodeText)
+    ec_phone = Column(UnicodeText)
+    cellphone = Column(UnicodeText)
+
+
 class Attendee(MagModel, TakesPaymentMixin):
+    account_id   = Column(UUID, ForeignKey('cached_account.id', ondelete='set null'), nullable=True, default=None)
     watchlist_id = Column(UUID, ForeignKey('watch_list.id', ondelete='set null'), nullable=True, default=None)
 
     group_id = Column(UUID, ForeignKey('group.id', ondelete='SET NULL'), nullable=True)
     group = relationship(Group, backref='attendees', foreign_keys=group_id, cascade='save-update,merge,refresh-expire,expunge')
 
     placeholder   = Column(Boolean, default=False, admin_only=True)
-    first_name    = Column(UnicodeText)
-    last_name     = Column(UnicodeText)
-    email         = Column(UnicodeText)
-    birthdate     = Column(Date, nullable=True, default=None)
     age_group     = Column(Choice(c.AGE_GROUPS), default=c.AGE_UNKNOWN, nullable=True)
 
+    # TODO: These are used entirely for form validation. Factor them out somehow.
     international = Column(Boolean, default=False)
-    zip_code      = Column(UnicodeText)
-    address1      = Column(UnicodeText)
-    address2      = Column(UnicodeText)
-    city          = Column(UnicodeText)
-    region        = Column(UnicodeText)
-    country       = Column(UnicodeText)
     no_cellphone  = Column(Boolean, default=False)
-    ec_phone      = Column(UnicodeText)
-    cellphone     = Column(UnicodeText)
 
     interests   = Column(MultiChoice(c.INTEREST_OPTS))
     found_how   = Column(UnicodeText)
@@ -1087,11 +1095,73 @@ class Attendee(MagModel, TakesPaymentMixin):
 
     _repr_attr_names = ['full_name']
 
+    @hybrid_property
+    def first_name(self):
+        return self.account.first_name if self.account_id else None
+
+    @hybrid_property
+    def last_name(self):
+        return self.account.last_name if self.account_id else None
+
+    @hybrid_property
+    def legal_name(self):
+        return self.account.legal_name if self.account_id else None
+
+    @hybrid_property
+    def email(self):
+        return self.account.email if self.account_id else None
+
+    @hybrid_property
+    def birthdate(self):
+        return self.account.birthdate if self.account_id else None
+
+    @hybrid_property
+    def zip_code(self):
+        return self.account.zip_code if self.account_id else None
+
+    @hybrid_property
+    def address1(self):
+        return self.account.address1 if self.account_id else None
+
+    @hybrid_property
+    def address2(self):
+        return self.account.address2 if self.account_id else None
+
+    @hybrid_property
+    def city(self):
+        return self.account.city if self.account_id else None
+
+    @hybrid_property
+    def region(self):
+        return self.account.region if self.account_id else None
+
+    @hybrid_property
+    def country(self):
+        return self.account.country if self.account_id else None
+
+    @hybrid_property
+    def ec_name(self):
+        return self.account.ec_name if self.account_id else None
+
+    @hybrid_property
+    def ec_phone(self):
+        return self.account.ec_phone if self.account_id else None
+
+    @hybrid_property
+    def cellphone(self):
+        return self.account.cellphone if self.account_id else None
+
     @predelete_adjustment
     def _shift_badges(self):
         # _assert_badge_lock()
         if self.badge_num:
             self.session.shift_badges(self.badge_type, self.badge_num + 1, down=True)
+
+    @presave_adjustment
+    def _account_management(self):
+        if not self.account:
+            # TODO: Add auto-matching functionality
+            self.account = CachedAccount()
 
     @presave_adjustment
     def _misc_adjustments(self):
@@ -1326,7 +1396,7 @@ class Attendee(MagModel, TakesPaymentMixin):
 
     @hybrid_property
     def full_name(self):
-        return self.unassigned_name or '{self.first_name} {self.last_name}'.format(self=self)
+        return self.unassigned_name or self.account.legal_name or '{self.first_name} {self.last_name}'.format(self=self)
 
     @full_name.expression
     def full_name(cls):

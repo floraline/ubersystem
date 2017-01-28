@@ -40,7 +40,7 @@ def detect_duplicates():
         with Session() as session:
             if session.no_email(subject):
                 grouped = defaultdict(list)
-                for a in session.query(Attendee).filter(Attendee.first_name != '')\
+                for a in session.query(Attendee).join(Attendee.account).filter(Attendee.first_name != '')\
                         .filter(Attendee.badge_status == c.COMPLETED_STATUS).options(joinedload(Attendee.group))\
                         .order_by(Attendee.registered):
                     if not a.group or a.group.status not in [c.WAITLISTED, c.UNAPPROVED]:
@@ -90,7 +90,7 @@ def check_placeholders():
 def check_unassigned():
     if c.PRE_CON and (c.DEV_BOX or c.SEND_EMAILS):
         with Session() as session:
-            unassigned = session.query(Attendee).filter_by(staffing=True, assigned_depts='').order_by(Attendee.full_name).all()
+            unassigned = session.query(Attendee).join(Attendee.account).filter_by(staffing=True, assigned_depts='').order_by(Attendee.full_name).all()
             subject = c.EVENT_NAME + ' Unassigned Volunteer Report for ' + localized_now().strftime('%Y-%m-%d')
             if unassigned and session.no_email(subject):
                 body = render('emails/daily_checks/unassigned.html', {'unassigned': unassigned})

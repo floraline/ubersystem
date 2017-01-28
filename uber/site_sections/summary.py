@@ -331,7 +331,7 @@ class Root:
         }
 
     def extra_merch(self, session):
-        return {'attendees': session.query(Attendee).filter(Attendee.extra_merch != '').order_by(Attendee.full_name).all()}
+        return {'attendees': session.query(Attendee).join(Attendee.account).filter(Attendee.extra_merch != '').order_by(Attendee.full_name).all()}
 
     def restricted_untaken(self, session):
         untaken = defaultdict(lambda: defaultdict(list))

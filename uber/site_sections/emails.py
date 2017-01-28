@@ -110,7 +110,7 @@ class Root:
         interests = [int(i) for i in listify(params['interests'])]
         assert all(k in c.INTERESTS for k in interests)
 
-        attendees = session.query(Attendee).filter_by(can_spam=True).order_by('email').all()
+        attendees = session.query(Attendee).join(Attendee.account).filter_by(can_spam=True).order_by('email').all()
 
         out.writerow(["fullname", "email", "zipcode"])
 
