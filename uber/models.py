@@ -487,7 +487,7 @@ class Session(SessionManager):
                                                      WatchList.active == True)).all()
 
         def get_account_by_email(self, email):
-            return self.query(AdminAccount).join(Attendee).join(Attendee.account).filter(func.lower(Attendee.email) == func.lower(email)).one()
+            return self.query(AdminAccount).join(Attendee).join(Attendee.cached_account).filter(func.lower(Attendee.email) == func.lower(email)).one()
 
         def no_email(self, subject):
             return not self.query(Email).filter_by(subject=subject).all()
@@ -814,14 +814,19 @@ class Session(SessionManager):
             if self.query(sa.AdminAccount).count() != 0:
                 return False
 
-            attendee = sa.Attendee(
-                placeholder=True,
+            account = sa.CachedAccount(
                 first_name='Test',
                 last_name='Developer',
                 email='magfest@example.com',
+            )
+
+            attendee = sa.Attendee(
+                cached_account=account,
+                placeholder=True,
                 badge_type=c.ATTENDEE_BADGE,
             )
             self.add(attendee)
+
 
             self.add(sa.AdminAccount(
                 attendee=attendee,
@@ -1010,7 +1015,6 @@ class Group(MagModel, TakesPaymentMixin):
 
 
 class CachedAccount(MagModel):
-    attendees = relationship('Attendee', backref=backref('cached_account', load_on_pending=True))
     first_name = Column(UnicodeText)
     last_name = Column(UnicodeText)
     legal_name = Column(UnicodeText)
@@ -1028,7 +1032,10 @@ class CachedAccount(MagModel):
 
 
 class Attendee(MagModel, TakesPaymentMixin):
-    account_id   = Column(UUID, ForeignKey('cached_account.id', ondelete='set null'), nullable=True, default=None)
+    cached_account_id   = Column(UUID, ForeignKey('cached_account.id', ondelete='set null'), nullable=True, default=None)
+    cached_account = relationship(CachedAccount, backref=backref('attendees', uselist=False),
+                 cascade='save-update,merge,refresh-expire,expunge')
+
     watchlist_id = Column(UUID, ForeignKey('watch_list.id', ondelete='set null'), nullable=True, default=None)
 
     group_id = Column(UUID, ForeignKey('group.id', ondelete='SET NULL'), nullable=True)
@@ -1087,69 +1094,17 @@ class Attendee(MagModel, TakesPaymentMixin):
     admin_account     = relationship('AdminAccount', backref=backref('attendee', load_on_pending=True), uselist=False)
     food_restrictions = relationship('FoodRestrictions', backref=backref('attendee', load_on_pending=True), uselist=False)
 
-    shifts = relationship('Shift', backref='attendee')
-    sales = relationship('Sale', backref='attendee', cascade='save-update,merge,refresh-expire,expunge')
-    mpoints_for_cash = relationship('MPointsForCash', backref='attendee')
-    old_mpoint_exchanges = relationship('OldMPointExchange', backref='attendee')
-    dept_checklist_items = relationship('DeptChecklistItem', backref='attendee')
-
     _repr_attr_names = ['full_name']
 
-    @hybrid_property
-    def first_name(self):
-        return self.account.first_name if self.account_id else None
+    from sqlalchemy.ext.associationproxy import association_proxy
 
-    @hybrid_property
-    def last_name(self):
-        return self.account.last_name if self.account_id else None
-
-    @hybrid_property
-    def legal_name(self):
-        return self.account.legal_name if self.account_id else None
-
-    @hybrid_property
-    def email(self):
-        return self.account.email if self.account_id else None
-
-    @hybrid_property
-    def birthdate(self):
-        return self.account.birthdate if self.account_id else None
-
-    @hybrid_property
-    def zip_code(self):
-        return self.account.zip_code if self.account_id else None
-
-    @hybrid_property
-    def address1(self):
-        return self.account.address1 if self.account_id else None
-
-    @hybrid_property
-    def address2(self):
-        return self.account.address2 if self.account_id else None
-
-    @hybrid_property
-    def city(self):
-        return self.account.city if self.account_id else None
-
-    @hybrid_property
-    def region(self):
-        return self.account.region if self.account_id else None
-
-    @hybrid_property
-    def country(self):
-        return self.account.country if self.account_id else None
-
-    @hybrid_property
-    def ec_name(self):
-        return self.account.ec_name if self.account_id else None
-
-    @hybrid_property
-    def ec_phone(self):
-        return self.account.ec_phone if self.account_id else None
-
-    @hybrid_property
-    def cellphone(self):
-        return self.account.cellphone if self.account_id else None
+    first_name = association_proxy('cached_account', 'first_name')
+    last_name = association_proxy('cached_account', 'last_name')
+    email = association_proxy('cached_account', 'email')
+    birthdate = association_proxy('cached_account', 'birthdate')
+    zipcode = association_proxy('cached_account', 'zipcode')
+    ec_phone = association_proxy('cached_account', 'ec_phone')
+    cellphone = association_proxy('cached_account', 'cellphone')
 
     @predelete_adjustment
     def _shift_badges(self):
@@ -1159,9 +1114,9 @@ class Attendee(MagModel, TakesPaymentMixin):
 
     @presave_adjustment
     def _account_management(self):
-        if not self.account:
+        if not self.cached_account:
             # TODO: Add auto-matching functionality
-            self.account = CachedAccount()
+            self.cached_account = CachedAccount()
 
     @presave_adjustment
     def _misc_adjustments(self):
@@ -1396,13 +1351,13 @@ class Attendee(MagModel, TakesPaymentMixin):
 
     @hybrid_property
     def full_name(self):
-        return self.unassigned_name or self.account.legal_name or '{self.first_name} {self.last_name}'.format(self=self)
+        return self.unassigned_name or '{self.first_name} {self.last_name}'.format(self=self)
 
     @full_name.expression
     def full_name(cls):
         return case([
             (or_(cls.first_name == None, cls.first_name == ''), 'zzz')
-        ], else_=func.lower(cls.first_name + ' ' + cls.last_name))
+        ], else_=func.lower('{cls.first_name} {cls.last_name}'.format(cls=cls)))
 
     @hybrid_property
     def last_first(self):
@@ -1412,17 +1367,7 @@ class Attendee(MagModel, TakesPaymentMixin):
     def last_first(cls):
         return case([
             (or_(cls.first_name == None, cls.first_name == ''), 'zzz')
-        ], else_=func.lower(cls.last_name + ', ' + cls.first_name))
-
-    @hybrid_property
-    def last_first(self):
-        return self.unassigned_name or '{self.last_name}, {self.first_name}'.format(self=self)
-
-    @last_first.expression
-    def last_first(cls):
-        return case([
-            (or_(cls.first_name == None, cls.first_name == ''), 'zzz')
-        ], else_=func.lower(cls.last_name + ', ' + cls.first_name))
+        ], else_=func.lower('{cls.last_name}, {cls.first_name}'.format(cls=cls)))
 
     @property
     def watchlist_guess(self):
@@ -1736,6 +1681,7 @@ class MerchPickup(MagModel):
 
 class DeptChecklistItem(MagModel):
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
+    attendee    = relationship('Attendee', backref='dept_checklist_items', single_parent=True)
     slug        = Column(UnicodeText)
     comments    = Column(UnicodeText, default='')
 
@@ -1853,6 +1799,7 @@ class Job(MagModel):
 class Shift(MagModel):
     job_id      = Column(UUID, ForeignKey('job.id', ondelete='cascade'))
     attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'))
+    attendee    = relationship('Attendee', backref='shifts', single_parent=True)
     worked      = Column(Choice(c.WORKED_STATUS_OPTS), default=c.SHIFT_UNMARKED)
     rating      = Column(Choice(c.RATING_OPTS), default=c.UNRATED)
     comment     = Column(UnicodeText)
@@ -1868,18 +1815,21 @@ class Shift(MagModel):
 
 class MPointsForCash(MagModel):
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
+    attendee    = relationship('Attendee', backref='mpoints_for_cash', single_parent=True)
     amount      = Column(Integer)
     when        = Column(UTCDateTime, default=lambda: datetime.now(UTC))
 
 
 class OldMPointExchange(MagModel):
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
+    attendee    = relationship('Attendee', backref='old_mpoint_exchanges', single_parent=True)
     amount      = Column(Integer)
     when        = Column(UTCDateTime, default=lambda: datetime.now(UTC))
 
 
 class Sale(MagModel):
     attendee_id    = Column(UUID, ForeignKey('attendee.id', ondelete='set null'), nullable=True)
+    attendee       = relationship('Attendee', backref='sales', cascade='save-update,merge,refresh-expire,expunge')
     what           = Column(UnicodeText)
     cash           = Column(Integer, default=0)
     mpoints        = Column(Integer, default=0)

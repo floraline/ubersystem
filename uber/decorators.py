@@ -42,6 +42,9 @@ def redirect_if_at_con_to_kiosk(func):
 def check_if_can_reg(func):
     @wraps(func)
     def with_check(*args, **kwargs):
+        if c.DEV_BOX:
+            return func(*args, **kwargs)
+
         if c.BADGES_SOLD >= c.MAX_BADGE_SALES:
             return render('static_views/prereg_soldout.html')
         elif c.BEFORE_PREREG_OPEN:

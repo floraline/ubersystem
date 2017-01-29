@@ -4,7 +4,7 @@ from uber.tests import *
 @pytest.fixture
 def attendee_id():
     with Session() as session:
-        return session.query(Attendee).filter_by(first_name='Regular', last_name='Attendee').one().id
+        return session.query(Attendee).join(Attendee.cached_account).filter_by(first_name='Regular', last_name='Attendee').one().id
 
 
 @pytest.fixture(autouse=True)

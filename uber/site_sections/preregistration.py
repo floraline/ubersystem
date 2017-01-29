@@ -69,7 +69,7 @@ class Root:
 
     def check_if_preregistered(self, session, message='', **params):
         if 'email' in params:
-            attendee = session.query(Attendee).join(Attendee.account).filter(func.lower(Attendee.email) == func.lower(params['email'])).first()
+            attendee = session.query(Attendee).join(Attendee.cached_account).filter(func.lower(Attendee.email) == func.lower(params['email'])).first()
             message = 'Thank you! You will receive a confirmation email if you are registered for {}.'.format(c.EVENT_NAME_AND_YEAR)
             subject = c.EVENT_NAME_AND_YEAR + ' Registration Confirmation'
 
@@ -178,7 +178,7 @@ class Root:
 
     def duplicate(self, session, id):
         attendee, group = self._get_unsaved(id)
-        orig = session.query(Attendee).join(Attendee.account).filter_by(first_name=attendee.first_name, last_name=attendee.last_name, email=attendee.email).first()
+        orig = session.query(Attendee).join(Attendee.cached_account).filter_by(first_name=attendee.first_name, last_name=attendee.last_name, email=attendee.email).first()
         if not orig:
             raise HTTPRedirect('index')
 
